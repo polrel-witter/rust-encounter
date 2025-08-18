@@ -52,6 +52,28 @@ Then to check code to make sure it compiles without generating an exectuable, ru
 `cargo build --release` to compile to an executable with optimizations. It'll also create an executable in `target/release` instead of `target/debug`. Notably, building for release takes longer because Rust is optimizing it so it's not recommended to use this regularly while in the development phase. 
 
 
+# Creating a larger program
+Importing deps from the standard library can be done by  using `use` keyword at the top of your program. Rust has a set of items defined in the std library that it brings into the scope of every program, called the _prelude_; found here: https://doc.rust-lang.org/std/prelude/index.html. However, if what you need is not listed in here,  you'll need to manually import it. This is why the `println!` macro didn't need an import module earlier.
+
+## Storing values and variables
+You can declare variables with `let`. Variables are immutable by default, meaning once we give the variable a value it won't change (more about this in Ch. 3). However, to make a valuable mutable we add `mut` before the variable name:
+```rust
+let apples = 5; // immutable
+let mut apples = 5; // mutable
+```
+
+You can associate functions to specific types (e.g. `String::new();`) which is kind of like a class method; you can apply some inherent function on the associated type. In the example, a new, empty `String` is generated. 
+
+`&` indicates that an argument is a _reference_, which gives you a way to let multiple parts of your code access one piece of data without needing to copy that data into memory multiple times. Like variables, references are immutable by default. Hence you'd need to write `&mut apples` instead of just `&apples` to make it mutable. More on references in chapter 4.
+
+If a function produces a result - something like Err or Ok - you'll need to handle those cases with `.expect` which allows you to define which options produce what to the user; an error message or a note indicating success. Like C programs you have to handle these, otherwise you'll get a warning. 
+
+When printing the value of a variable, you can do so by simply placing the variable name in `{}` braces. 
+
+Leftoff: Generating a Secret Number
+
+
+
 
 
 
