@@ -228,3 +228,114 @@ fn main() {
 }
 ```
 
+## Functions
+Declared with `fn` and names are written in snake_case, as with file names and variables. 
+
+Rust doesn't care about where you've defined your functions, only that they're defined somewhere within the scope seen by the caller.
+
+In function signatures you must declare the type of each parameter. Separate multiple params with commas: `(value: i32, unit_label: char)`
+
+Function bodies are construted with a series of statements optionally ending in an expression, defined as:
+- Statements: instructions that perform some action and do not return a value
+- Expressions: evaluate to a resultant value
+
+Expressions do not include ending semicolons:
+```rust
+let y = {
+    let x = 3;
+    x + 1
+};
+```
+
+If you add a semicolon to the end it'll turn into a statement, not returning a value.
+
+### Returning values
+Functions can return values to those that called them. You can't name return values, but you declare they're type with an arrow `->`. You can return early from a function using the `return` keyword and specifying a value. 
+
+```rust
+fn five() -> i32 {
+    5
+}
+
+fn main() {
+    let x = five();
+
+    println!("The value of x is : {x}");
+}
+```
+
+## Control flow
+### If expressions
+Blocks of code associated with the conditions in `if` expressions are called _arms_, just like arms in a `match` expression. We can optionally include an `else` condition.
+
+Because `if` is an expression we can use it on the right side of a `let` statement:
+```rust
+fn main() {
+    let condition = true;
+    let number = if condition { 5 } else { 6 };
+    
+    println!("The value of number is: {number}");
+}
+```
+
+Note that variables in an if statement must have a single type. So in the above example we couldn't replace 6 with `"six"`.
+
+### Loops
+`break` terminates the loop while `continue` will tell the program to skip over any remaining code in this iteration and go to the next.
+
+You can use `break` to return a value as well:
+```rust
+fn main() {
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+        if counter == 10 {
+            break counter * 2;
+        }
+    };
+
+    println!("Result is {result}");
+}
+```
+
+Alternatively, you can also use `return` to exit a loop an produce some result. 
+
+You can use _loop labels_ to address a specific loop (if you have more than one nested), used with `break` and `continue` like so:
+```rust
+fn main() {
+    let mut count = 0;
+    'counting_up: loop {
+        println!("count = {count}");
+        let mut remaining = 10;
+
+        loop {
+            println!("remaining = {remaining}");
+            if remaining == 9 {
+                break;
+            }
+            if count == 2 {
+                break 'counting_up;
+            }
+            remaining -= 1;
+        }
+
+        count += 1
+    }
+    println!("End count = {count}");
+}
+```
+
+Use `while` to loop while a condition is true.
+
+Helpful to use a `for` loop for iterating over an array (more efficent than usuing `while`):
+```rust
+fn main() {
+    let a = [10, 20, 30, 40, 50];
+
+    for element in a {
+        println!("the value is: {element}");
+    }
+}
+```
