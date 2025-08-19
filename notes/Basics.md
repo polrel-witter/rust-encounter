@@ -91,3 +91,140 @@ You can update your entire dependency list and the associated `Cargo.lock` versi
 
 Run `cargo doc --open` to auto-build documentation of your dependency lists and view it in your local browser.
 
+# Common programming concepts
+## Variables and mutability
+By default variables are immutable, as noted previously; this is one advantage with Rust, enhancing code safety.
+
+Having immutable variables by default makes reasoning about variables across codebases much easier.
+
+## Constants
+Not just immutable by default; they're always immutable. Use `const` instead of `let` and the type keyword _must_ be annotated. They can also be declared in any scope, including global scope.
+
+The last characteristic is that constants can be only set to a constant expression, not the result of a value that could only be computed at runtime. And they must be in all uppercase.
+
+E.g. `const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;`
+
+They're of course useful in a global context, allowing many parts of the program to know about them. It also makes updating constant values much easier than reinstantiating immutable variables peppered throughout the codebase.
+
+## Shadowing
+Means you can declare a new variable with the same name as a previous variable; i.e. the first variable is _shadowed_ by the second.
+
+```rust
+fn main() {
+    let x = 5;
+
+    let x = x + 1;
+
+    {
+        let x = x * 2;
+        println!("The value of x in the inner scope is: {x}");
+    }
+
+    println!("The value of x is: {x}");
+}
+```
+
+Output will be:
+```
+The value of x in the inner scope is: 12
+The value of x is: 6
+```
+
+Because the inner scope leverages x, but since it's separated by braces after it executes, x will remain 6 as assigned with `let x = x + 1;`
+
+Also note that shadowing is possible because we're using the `let` keyword to reassign x. This is of course different from using `mut` because with `mut` you don't have to redefine with `let`; the value is merely mutated.
+
+The utlity of shadowing allows to refrain from comming up with different names for the same variables.
+
+## Data types
+Every value in rust is of a certain data type. Rust is a statically typed language, meaning it _must_ know the types of all variables at _compile time_.
+
+### Scalar types
+Represents a single value. Rust primarily has 4:
+- integers
+- floating-point numbers
+- booleans
+- characters
+
+**Integer**
+A number without a fractional component. Here are Rusts types:
+Length                  Signed        Unsigned
+8-bit                   i8            u8
+16-bit                  i16           ...
+32-bit                  ...
+64-bit
+128-bit
+architecture dependent  isize
+
+Number literals can use `_` as a visual separator to make numbers that would otherwise have a `.` easier to read; but both 1000 and 1_000 are handled the same way.
+
+Practially, if you're unsure of which integer types to use it's fruitful to just go with Rusts' defaults: e.g. i32.
+
+_Integer overflow_ occurs when you attempt to assign a value that's outside the length of the variable type. eg. assigning a value of say 271 to an `u8` integer which has the range of 0 to 255. This will cause your program to _panic_ at runtime, but the compiler should catch it.
+
+**Boolean**
+One byte in size, specified using `bool`; `let f: bool = false;`
+
+**Character**
+`char` is the most primitive alphabetic type. Here are some example declarations:
+```rust
+fn main() {
+    let c = 'z';
+    let z: char = 'Z';
+    let heart_eyed_cat = '😻';
+}
+```
+
+Characters are four bytes in size and represents a Unicode scalar value, which means it can represent a lot more than just ASCII.
+
+### Compound types
+Group multiple values into one type; rust has two primitive types: tuples and arrays.
+
+**Tuple**
+A way to group a number of values with a variety of types into one compound type. They have a fixed length; once declared they cannot grow or shrink in size.
+
+E.g.
+```rust
+let main() {
+    let tup: (i32, f64, u8) = (500, 6.4, 1);
+}
+```
+
+To access a value in the tuple you can either _destructure_ it by assigning each value in the tuple a variable then calling the variable or by referencing the value directly with a period `.` followed by the index of the value:
+
+```rust
+fn main() {
+    let x: (i32, f64, u8) = (500, 6.4, 1);
+
+    let five_hundred = x.0;
+
+    let six_point_four = x.1;
+
+    let one = x.2;
+}
+```
+
+**Array**
+Unlike a tuple, every element of an array must have the same type. Arrays also have fixed lengths.
+
+They're written as comma-separated lists inside square brackets: `let a = [1, 2, 3, 4, 5];`
+
+An array's cousin, a Vector, is more flexible as it can grow and shrink in size. It's able to do this because its contents exist on the heap; rather than the stack which is where the contents of an array live.
+
+The trade-offs:
+Arrays sacrifice flexibility for guaranteed performance and compile-time guarantees. If you know the size won't change, arrays eliminate an entire class of runtime overhead.
+
+It's about choosing the right tool: arrays for speed and predictability, vectors for flexibility.
+
+You write an array's type like so: `let a: [i32; 5] = [1, 2, 3, 4, 5];` where `i32` is the type of each element
+
+You can access elements of anrray using indexing:
+```rust
+fn main() {
+    let a = [1, 2, 3, 4, 5];
+
+    let first = a[0];
+    let second = a[1];
+}
+```
+
