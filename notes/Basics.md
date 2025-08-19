@@ -339,3 +339,40 @@ fn main() {
     }
 }
 ```
+
+# Ownership
+A unique feature in Rust. It enables memory safety guarantees without needing a garbage collector.
+
+It's a set of rules that governs how a Rust program manages memory. Some languages have garbage collection that regularly looks for no-longer-used memory as the program runs; in other languages, the programmer must explicitly allocate and free the memory. Rust uses a third approach: memory is managed through a system of ownership with a set of rules that the compiler checks. If any of the rules are violated, the program won’t compile. None of the features of ownership will slow down your program while it’s running.
+
+Ownership forces you to think about the Stack and Heap (what's in memory at any given time). They're both available to your code to use at runtime, but they're sturctured in different ways. The stack stores values in the order it gets them and removes them in the  opposite order (i.e. last-in-first-out). All data stored on the stack must have a known, fixed size. Any data with an unknown size must be stored on the heap, which is less organized.
+
+When you allocate to the heap, you request a certain amount of space. Malloc finds an empty spot in the heap that's big enough, marks it as being in use, then returns a pointer (the address at that location). This is called _allocating_. Because the pointer _to_ the heap is a known, fixed size, you can store the pointer on the stack, but when you need the actual data, you must go to the heap. 
+
+The stack is faster because the allocator never has to look for an empty space to store the data; that location is always at the top of the stack. Additionally, accessing data on the heap is slower too because you have to follow a pointer to get there. 
+
+The main purpose of ownership is to manage heap data.
+
+## Rules
+- Each value in Rust has an _owner_.
+- There can only be one owner at a time.
+- When the owner goes out of scope, the value will be dropped.
+
+## Variable scope
+A variable is valid (in scope) from the point at which it's declared until the end of the current _scope_.
+
+## Memory and allocation
+With a data type that has a variable size the memory must be requested from malloc at runtime (opposed to something like a string literal which is hardcoded into the program's exectuable at compile time). We also need a way to return this memory to the allocator when we're done using it. 
+
+Most languages have a garbage collector to handle the cleanup. However, these GCs come with serious overhead, reducing performance. Rust takes a different path: the memory is automatically returned once the variable that owns it goes out of scope. Rust calls `drop` when this happens, which happens automatically at the closing curly bracket. E.g.
+```rust
+{
+    let s = String::from("hello"); // s is valid from this point forward as it's allocated to the heap
+
+    // do stuff with s
+} // this scope is now over, and s is no longer valid.
+```
+
+Similar to subject-oriented programming where what's in scope at any given point is of primary concern.
+
+
