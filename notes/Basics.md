@@ -229,7 +229,7 @@ fn main() {
 ```
 
 ## Functions
-Declared with `fn` and names are written in snake_case, as with file names and variables. 
+Declared with `fn` and names are written in snake_case, as with file names and variables.
 
 Rust doesn't care about where you've defined your functions, only that they're defined somewhere within the scope seen by the caller.
 
@@ -250,7 +250,7 @@ let y = {
 If you add a semicolon to the end it'll turn into a statement, not returning a value.
 
 ### Returning values
-Functions can return values to those that called them. You can't name return values, but you declare they're type with an arrow `->`. You can return early from a function using the `return` keyword and specifying a value. 
+Functions can return values to those that called them. You can't name return values, but you declare they're type with an arrow `->`. You can return early from a function using the `return` keyword and specifying a value.
 
 ```rust
 fn five() -> i32 {
@@ -273,7 +273,7 @@ Because `if` is an expression we can use it on the right side of a `let` stateme
 fn main() {
     let condition = true;
     let number = if condition { 5 } else { 6 };
-    
+
     println!("The value of number is: {number}");
 }
 ```
@@ -300,7 +300,7 @@ fn main() {
 }
 ```
 
-Alternatively, you can also use `return` to exit a loop an produce some result. 
+Alternatively, you can also use `return` to exit a loop an produce some result.
 
 You can use _loop labels_ to address a specific loop (if you have more than one nested), used with `break` and `continue` like so:
 ```rust
@@ -347,9 +347,9 @@ It's a set of rules that governs how a Rust program manages memory. Some languag
 
 Ownership forces you to think about the Stack and Heap (what's in memory at any given time). They're both available to your code to use at runtime, but they're sturctured in different ways. The stack stores values in the order it gets them and removes them in the  opposite order (i.e. last-in-first-out). All data stored on the stack must have a known, fixed size. Any data with an unknown size must be stored on the heap, which is less organized.
 
-When you allocate to the heap, you request a certain amount of space. Malloc finds an empty spot in the heap that's big enough, marks it as being in use, then returns a pointer (the address at that location). This is called _allocating_. Because the pointer _to_ the heap is a known, fixed size, you can store the pointer on the stack, but when you need the actual data, you must go to the heap. 
+When you allocate to the heap, you request a certain amount of space. Malloc finds an empty spot in the heap that's big enough, marks it as being in use, then returns a pointer (the address at that location). This is called _allocating_. Because the pointer _to_ the heap is a known, fixed size, you can store the pointer on the stack, but when you need the actual data, you must go to the heap.
 
-The stack is faster because the allocator never has to look for an empty space to store the data; that location is always at the top of the stack. Additionally, accessing data on the heap is slower too because you have to follow a pointer to get there. 
+The stack is faster because the allocator never has to look for an empty space to store the data; that location is always at the top of the stack. Additionally, accessing data on the heap is slower too because you have to follow a pointer to get there.
 
 The main purpose of ownership is to manage heap data.
 
@@ -362,7 +362,7 @@ The main purpose of ownership is to manage heap data.
 A variable is valid (in scope) from the point at which it's declared until the end of the current _scope_.
 
 ## Memory and allocation
-With a data type that has a variable size the memory must be requested from malloc at runtime (opposed to something like a string literal which is hardcoded into the program's exectuable at compile time). We also need a way to return this memory to the allocator when we're done using it. 
+With a data type that has a variable size the memory must be requested from malloc at runtime (opposed to something like a string literal which is hardcoded into the program's exectuable at compile time). We also need a way to return this memory to the allocator when we're done using it.
 
 Most languages have a garbage collector to handle the cleanup. However, these GCs come with serious overhead, reducing performance. Rust takes a different path: the memory is automatically returned once the variable that owns it goes out of scope. Rust calls `drop` when this happens, which happens automatically at the closing curly bracket. E.g.
 ```rust
@@ -374,6 +374,166 @@ Most languages have a garbage collector to handle the cleanup. However, these GC
 ```
 
 Similar to subject-oriented programming where what's in scope at any given point is of primary concern.
+
+### Moves
+When assigning, say, one string variable to another like in the example below, in Rust terms this is called a move because what's happening under the hood is that `s1` (made up of a pointer, lenght of the data in bytes, and capacity in bytes stored on the Stack) is simply moved to `s2` instead and the `s1` pointer and associated data is invalidated.
+
+In other languages this would be called something like a _shallow copy_ (opposed to a deep copy where the data is physically copied in memory) which makes both variables point at the same data in memory. However, Rust doesn't allow this because without carefully freeing it properly you encounter what's called the _double free_ error, leading to memory corruption which can potentially lead to security vulnerabilities.
+
+Hence it's called a _move_ and not a _copy_. This implies that Rust will never automatically create "deep" copies of your data so any automatic copying can be assumed to be inexpensive in terms of runtime performance.
+
+### Scope and assignment
+This _move_ behavior happens with "reassigned" variables, too. For instance:
+```rust
+let mut s = String::from("hello");
+let s = String::from("ahoy");
+```
+
+The "hello" assigned to `s` is `drop`ped for `ahoy` instead.
+
+### Cloning
+If you want to deep copy the heap data of the String, not just the stack data (pointer, length, and capacity), you can use something called the `clone` method to do so.
+
+This will make a hard copy in the heap and assign it to your variable:
+```rust
+let s1 = String::from("hellow");
+let s2 = s1.clone();
+```
+
+### Stack-only copy
+Types such as integers that have a known size at compile time are stored entirely on the stack, so copies of the actual values are quick to make. In this example `x` still remains independent of `y` and retains its value: 5.
+```rust
+let x = 5;
+let y = x;
+```
+
+This works because integers have a special annotation called the `Copy` trait which applies to other types that are stored on the stack. If a type has the `Copy` trait, variables that use it do not `move`; rather are trivially copied onto the stack, making them still valid after assigning them to another variable.
+
+Others that implement the `Copy` trait contain scalar attributes, meaning they don't require allocation. Some other types that contain this trait:
+- Boolean
+- Floating point
+- Characters
+- Tuples, if they also contain types that implement `copy`.
+
+### Ownership and functions
+Passing a variable to a function will move or copy it, just as assignment does. However, there's one strange quality that typifies the idea of ownership: if a variable of a non-scalar type (i.e. a String, array, etc.) is passed to another function, that variable goes out of scope. However, types that implement `Copy` do not go out of scope after being passed to another function.
+
+```rust
+fn main() {
+    let s = String::from("hello"); // s comes into scope
+
+    takes_ownership(s); // s goes out of scope
+
+    let x = 5; // x comes into scope
+
+    makes_copy(x); // x is still in scope after this.
+}
+```
+
+## References and borrowing
+Since variable values basically disappear after passing to a function, and it's common to have to reference that variable later on, Rust has what are called _references_ which allow you to call that data from memory. They're kind of like pointers except that a reference garantees to point to a valid value of a particular type for the life of the reference.
+
+A reference is an address in memory:
+
+```rust
+fn main() {
+    let s1 = String::from("hello");
+
+    let len = calculate_length(&s1); // reference to s1
+
+    println!("The lenth of {s1} is {len}");
+}
+
+fn calculate_length(s: &String) -> usize {
+    s.len()
+}
+```
+
+As you can see the `&` indicate a reference and allow you to pass a referance of the data to a different function without passing over ownership of it. The opposite of referencing is dereferencing, with `*`, but we'll cover this later.
+
+When a function merely accepts references rather than actual values there's no need to "pass back" any data to give back ownership because it never had ownership of the data.
+
+The action of creating a reference is called _borrowing_. In line with this, when you pass a reference to a different function you can't modify it; just as variables are immutable by default, so are references.
+
+### Mutable references
+Just like a mutable variable, you explicitly state whether you're passing a mutable reference of the underlying value or not:
+
+```rust
+fn main() {
+    let mut s = String:from("hello");
+
+    change(&mut s);
+}
+
+fn change(some_string: &mut String) {
+    some_string.push_str(", world");
+}
+```
+
+However, it's not possible to make multiple mutable references. This prevents data races.
+
+Instead, if you need to refer to a mutable reference more than once, you'll want to section it out of scope before doing so, like:
+
+```rust
+let mut s = String::from("hello");
+
+{
+    let r1 = &mut s;
+} // r1 goes out of scope here, so we can make a new reference without a problem
+
+let r2 = &mut s;
+```
+
+## The slice type
+String slices are nice to use in scenarios where you're needing to reference "chunks" of elements within a `String`. E.g. instead of having to implement functions that keep track of various indicies and the underlying String itself, you can use String Slices, which look like this:
+
+```rust
+let s = String::from("hello world");
+
+let hello = &s[0..5];
+let world = &s[6..11];
+```
+
+Rather than a reference to the entire string, you can slice it up by refering to specific portions of it. Explicitly, the grammar is `[starting_index..ending_index]`. Starting index is where to start and ending is one more than where to end.
+
+You can also drop the 0 if you're referring to the beginning of a string (e.g. `[..4]`); similarly if your slice includes the last byte of the string, you can drop the trailing number: `[5..]`. And, can finally drop both indicies if you want to take the whole string: `[..]`.
+
+Note: String slice range indices must occur at valid UTF-8 character boundaries. If you attempt to create a string slice in the middle of a multibyte character, your program will exit with an error.
+
+It's also important to note that a string slice _is_ a reference. The type indicating a string slice is `&str`.
+
+E.g.
+```rust
+fn first_word(s: &String) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[..i];
+        }
+    }
+
+    &s[..]
+}
+```
+
+A `String` is equivelant to a whole slice of a string so can be passed into a function that accepts a string slice:
+
+```rust
+let my_string = String:from("hello world");
+
+let word = first_word(&my_string[..]);
+let word = first_word(&my_string);
+
+// It also works for string literals
+let my_string_literal = "hello world";
+
+let word = first_word(&my_string_literal[..]);
+let word = first_word(my_string_literal);
+```
+
+Lastly, slices are not solely specific to strings; they can be applied to a number of other "collections" which will be covered later.
+
 
 ### Moves
 When assigning, say, one string variable to another like in the example below, in Rust terms this is called a move because what's happening under the hood is that `s1` (made up of a pointer, lenght of the data in bytes, and capacity in bytes stored on the Stack) is simply moved to `s2` instead and the `s1` pointer and associated data is invalidated.
