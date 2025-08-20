@@ -375,4 +375,161 @@ Most languages have a garbage collector to handle the cleanup. However, these GC
 
 Similar to subject-oriented programming where what's in scope at any given point is of primary concern.
 
+# Structs
+## Defining and instantiating
+Structs are similar to Tuples although you'll name the different types associated with it, making them more flexible as you don't have to rely on the ordering of the types when interacting with it. You can just reference the various parts by name. These parts are called _fields_.
+
+```rust
+struct User {
+    active: bool,
+    username: String,
+    email: String,
+    sign_in_count: u64,
+}
+```
+
+Then to instantiate:
+```rust
+fn main() {
+    let user1 = User {
+        active: true,
+        username: String::from("someusername"),
+        email: String::from("someone@aol.com"),
+        sign_in_count: 1,
+    };
+}
+```
+
+Then to access a field in a struct you can use dot `.` notiation: `user1.email`. If you mark the struct instance mutible you can change certain fields by simply calling the "arm". Note that you must make the entire struct mutable; it's not possible to only make parts of it as such.
+
+There's a field init shorthand so you can avoid duplicating the same words:
+```rust
+fn build_user(email: String, username: String) -> User {
+    User {
+        active: true,
+        username, // rather than username: username,
+        email,  // or email: email,
+        sign_in_count: 1,
+    }
+}
+```
+
+Similarly, there's an update syntax that allows you to reduce your code:
+
+```rust
+let user2 = User {
+    email: String::from("another@aol.com"),
+    ..user1  // assigns the remaining fields from user1 since they won't change
+};
+```
+
+This shortcut must come last, but it doesn't matter what order the other fields are in the struct. This update syntax allow uses `=` (assignment) so the data from user1 to user2 would be _moved_; hence these data from user1 would no longer be valid. 
+
+### Tuple structs
+You can build tuples similar to structs if you're in a scenario where you need to name the tuple, but don't need field names.
+
+```rust
+struct Color(i32, i32, i32);
+struct Point(i32, i32, i32);
+
+fn main() {
+    let black = Color(0, 0, 0);
+    let origin = Point(0, 0, 0);
+}
+```
+
+### Non-field structs
+Called _Unit-like_ structs. 
+
+```rust
+struct AlwaysEqual;
+
+fn main() {
+    let subject = AlwaysEqual;
+}
+```
+
+### Debugging structs
+An alternative to using `println!` is the `dbg!` macro which can be used without explicitly turning on struct-oriented debugging information in your code. But you need to pass the data going to `dbg!` as a reference because otherwise it would take ownership of the data. Inversely, `println!` only uses data as references so there's no need to manually pass in as references. 
+
+Additionally, `dbg!` prints out the file and line number to the terminal so it could be more useful in debugging scenarios. 
+
+
+## Methods
+Like functions, but defined within the confines of a struct and their first parameter is always `self` which represents the instnace of the struct the method is being called on. 
+
+The main reason for using methods, opposed to loose functions, is to organize functions around specific types. It's a concise way to gather functions related to a specific type into one area of the code. 
+
+While it's possible to move ownership to a method, by default (an 99% of the time) you'll want to just pass a reference, written as `&self` in the method's function signature. 
+
+Also, note you can use the same name from a field to use for a method.
+
+## Associated functions
+Similar to methods, but don't have the `self` as a parameter. Often used for constructors that will return a new instance of the struct. 
+
+To call associated functions you use the `::` syntax, like `String::from("hello");`.
+
+## Multiple impl blocks
+Each struct is allowed to have multiple implmentation blocks. 
+
+# Enums and pattern matching
+Enums give you the capability to say whether a value is one of a possible set of values. 
+
+Variations of an enum are namespaced under its identifier and we use `::` to separate the two:
+
+```rust
+enum IpAddrKind {
+    V4,
+    v6,
+}
+
+
+let four = IpAddrKind::V4;
+let four = IpAddrKind::V6;
+```
+
+We can then embed data in each enum variant like so:
+
+```rust
+enum IpAddrKind {
+    V4(String),
+    V6(String),
+}
+
+let home = IpAddrKind::V4(String::from("127.0.0.1"));
+let loopback = IpAddrKind::V6(String::from("::1"));
+```
+
+This way there's no need for an additional struct to hold the data.
+
+Another benefit of storing data in enums is that the underlying type signature of the data doesn't have to be the same across variants:
+
+```rust
+enum IpAddrKind {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+```
+
+But you don't have to stop here; you can also embed structs and even enums within enums. Additionally, you can define methods on enums using the same `impl` keyword. 
+
+## Option enum
+Defined in the standard library. An option is simply something or nothing. Like a unit in `hoon`.
+
+Rust does not have `null` as a concept; but rather has an enum that allows you to encode this concept if you want: the enum is `Option<T>`, defined as:
+
+```rust
+enum Option {
+    None,
+    Some<T>.
+}
+```
+
+It's so useful that it's included in the prelude. You can use Some and None without the Option prefix. 
+
+Just like with `hoon` units, you need to "strip the unit" in order to operate on the underlying data as the static type system recognizes the `Option<T>` type and `T` to be two separate types. To do this, check out the methods available for `Option<T>` in the documentation: https://doc.rust-lang.org/std/option/enum.Option.html.
+
+Using `match` will come in handy to separate code blocks that operate on the data depending on which _option_ is present:
+
+## Match
 
