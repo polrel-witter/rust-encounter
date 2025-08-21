@@ -680,7 +680,7 @@ Rust does not have `null` as a concept; but rather has an enum that allows you t
 ```rust
 enum Option {
     None,
-    Some<T>.
+    Some<T>,
 }
 ```
 
@@ -811,3 +811,354 @@ A path can take two forms:
 - A relative path starts from the current module and uses self, super, or an identifier in the current module.
 
 Path identifiers are separated by `::`.
+
+It's best practice to use absolute paths to retain isolation, reducing the amount of revisions needed as you make changes to paths.
+
+### Public vs. private modules
+
+Parent modules cannot use functions, structs, etc from child modules, unless they're public. By default they're private. This is a deliberate design decision in Rust to avoid external code breaking as a result of easily depending on inner module code; you have to explicitly make this connection, forcing you to think about what you should expose and shouldn't.
+
+You can make a module public with the `pub` keyword. However, making a module public doesn't mean its contents will be public; you have to explicitly state which parts of the module should be public.
+
+```rust
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+pub fn eat_at_restaurant() {
+    // Absolute path
+    crate::front_of_house::hosting::add_to_waitlist();
+
+    // Relative path
+    front_of_house::hosting::add_to_waitlist();
+}
+```
+
+`eat_at_resturant` can acceess `add_to_waitlist` because the funtion and its parent module `hosting` are public and the top-parent module `front_of_house` (while not explicitly stated as public), is a sibling module of `eat_at_resturant` so has access. However, to have other modules outside this crate access `front_of_house` you'd have to explicitly make it public, like `eat_at_resturant`.
+
+These public modules make up your API, particularly in the context of a library crate. 
+
+Instead of typing out the full relative path you can use `super` (like `..` in C) to jump out to the parent module to call an item. 
+
+```rust
+fn deliver_order() {}
+
+mod back_of_house {
+    fn fix_incorrect_order() {
+        cook_order();
+        super::deliver_order();
+    }
+
+    fn cook_order() {}
+}
+```
+
+Making a struct public doesn't automatically make the fields public. These must be granularly made public. However, making an enum public makes all its variants public. 
+
+#### Best Practices for Packages with a Binary and a Library
+> We mentioned that a package can contain both a src/main.rs binary crate root as well as a src/lib.rs library crate root, and both crates will have the package name by default. Typically, packages with this pattern of containing both a library and a binary crate will have just enough code in the binary crate to start an executable that calls code defined in the library crate. This lets other projects benefit from the most functionality that the package provides because the library crate’s code can be shared.
+
+> The module tree should be defined in src/lib.rs. Then, any public items can be used in the binary crate by starting paths with the name of the package. The binary crate becomes a user of the library crate just like a completely external crate would use the library crate: it can only use the public API. This helps you design a good API; not only are you the author, you’re also a client!
+
+## Using `use`
+`use` allows you to state the path to a module once so you can then call the items at that path without having to specify each part of the path every time you make a call. 
+
+```rust
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+use crate::front_of_house::hosting;
+
+pub fn eat_at_resturant {
+    hosting::add_to_waitlist();
+}
+```
+
+This is similar to creating a symbolic link in the filesystem. In the example above, `hosting` is now in-scope. 
+
+However, `use` only creates a shortcut for the particular scope in which the `use` occurs. If the `eat_at_resturant` function was defined within a different module, `hosting` would not be in scope. I.e. the `use` shortcut needs to be _within_ the context of a module in order to place the contents at the path in scope.
+
+You'll notice that in the example above we still had to call `add_to_waitlist`'s parent module `hosting`. This is considered the "idomatic" way of calling functions in rust. You could get rid of it by specifying the function name in the `use` shortcut (`use crate::front_of_house::hosting::add_to_waitlist;`) which would allow you to then only refer to the function name, but this is bad practice because then it appears that `add_to_waitlist` is a local, rather than "foreign" function. Alternatively, it's good practice to do this for structs, enums, and other items.
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    let mut map = HashMap::new();
+    map.insert(1, 2);
+}
+```
+
+The exception to this is if we're bringing in two items with the same name into scope with `use` statements, becuase Rust doesn't allow that. 
+
+```rust
+use std::fmt;
+use std::io;
+
+fn function1() -> fmt::Result {
+    // --snip--
+}
+
+fn function2() -> io::Result<()> {
+    // --snip--
+}
+```
+
+Alterntatively, you can alias one of these names with `as`. 
+
+```rust
+use std::fmt::Result;
+use std::io::Result as IoResult;
+
+fn function1() -> Result {
+    // --snip--
+}
+
+fn function2() -> IoResult<()> {
+    // --snip--
+}
+```
+
+Note that to use the standard library, you do need to pull it into scope - it's not there by default because it's a package (albiet that comes with Rust) like all others. 
+
+### Nested `use` paths
+Instead of defining each path by line, if items are coming from the same module or crate, you can trunkate into one line by specifying the common part of the path followed by `::` and `{}` around the parts taht differ.
+
+```rust
+use std::{fmt::Result, io::Result as IoResult};
+// or
+use std::io::{self, Write};
+```
+
+### The Glob operator
+If we'd prefer to bring in all public items defined at a path into scope, we can use the glob operator `*`.
+
+```rust
+use std::collections::*;
+```
+
+Be careful with this though because as code changes, this may cause compile errors as you have not granularly specified which parts "work" with the code these other modules are interfacing with. It's best used to pull everything into a test module. 
+
+## Summary
+Rust lets you split a package into multiple crates and a crate into modules so you can refer to items defined in one module from another module.
+
+
+# Common collections
+Collections are a series of useful data structures that exists within the standard library. Unlike build-in types like arrays and tuples, the data that these collections point to are stored on the heap. 
+
+A few data types are covered in the book (vectors, strings, and hash maps), but for a full index, see here: https://doc.rust-lang.org/std/collections/index.html
+
+
+# Errors
+There are two types of errors in Rust:
+- Recoverable: will keep the program running, but notify the user (i.e. couldn't write to or find a file)
+- Unrecoverable: indicated with `panic!` which will hault the program due to critical nature (i.e. running out of memory, etc.)
+
+## Unrecoverable errors with panic!
+Rust has the `panic!` macro to help you handle these kinds of errors. Certain types of operations will automatically call a `panic!` - like trying to access an item past the end of an array) - or you can call it manually.
+
+By default, these panics will print a failure message, unwind, clean up the stack, and quit.
+
+Unwinding the Stack or Aborting in Response to a Panic
+By default, when a panic occurs the program starts unwinding, which means Rust walks back up the stack and cleans up the data from each function it encounters. However, walking back and cleaning up is a lot of work. Rust, therefore, allows you to choose the alternative of immediately aborting, which ends the program without cleaning up.
+
+Memory that the program was using will then need to be cleaned up by the operating system. If in your project you need to make the resultant binary as small as possible, you can switch from unwinding to aborting upon a panic by adding panic = 'abort' to the appropriate [profile] sections in your Cargo.toml file. For example, if you want to abort on panic in release mode, add this:
+
+```
+[profile.release]
+panic = 'abort'
+```
+
+However, if you chose to use `panic!` you can set the `RUST_BACKTRACE` environment variable to get a backtrace of exactly what happened to cause the error. A backtrace is a list of all the functions that were called that led to this point.
+
+```bash
+$ RUST_BACKTRACE=1 cargo run
+thread 'main' panicked at src/main.rs:4:6:
+index out of bounds: the len is 3 but the index is 99
+stack backtrace:
+   0: rust_begin_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library/std/src/panicking.rs:692:5
+   1: core::panicking::panic_fmt
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library/core/src/panicking.rs:75:14
+   2: core::panicking::panic_bounds_check
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library/core/src/panicking.rs:273:5
+   3: <usize as core::slice::index::SliceIndex<[T]>>::index
+             at file:///home/.rustup/toolchains/1.85/lib/rustlib/src/rust/library/core/src/slice/index.rs:274:10
+   4: core::slice::index::<impl core::ops::index::Index<I> for [T]>::index
+             at file:///home/.rustup/toolchains/1.85/lib/rustlib/src/rust/library/core/src/slice/index.rs:16:9
+   5: <alloc::vec::Vec<T,A> as core::ops::index::Index<I>>::index
+             at file:///home/.rustup/toolchains/1.85/lib/rustlib/src/rust/library/alloc/src/vec/mod.rs:3361:9
+   6: panic::main
+             at ./src/main.rs:4:6  # < our panic happens here!
+   7: core::ops::function::FnOnce::call_once
+             at file:///home/.rustup/toolchains/1.85/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+```
+
+As you can see the panic happens at the 6th call; line 4:6 from src/main.rs.
+
+## Recoverable errors with Result
+However, most errors aren't serious enough to have to force a program to stop entirely. For this we can use the `Result` enum.
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+For example, when attempting to open a file with `File::open`, it produces a `Result`:
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let greeting_file_result = File::open("hello.txt");
+}
+```
+
+Then we can handle the Result based on the variant:
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let greeting_file_result = File::open("hello.txt");
+
+    let greeting_file = match greeting_file_result {
+        Ok(file) => file,
+        Err(error) => panic!("Problem opening the file: {error:?}",
+    };
+}
+```
+
+Note that, like `Option<T>`, `Result<T, E>` is a part of the prelude so we don't have to specify `Result::` as a part of the match arms.
+
+You can go further than this by branching on the error to produce more granular actions based on the result.
+
+### Proprogating errors
+If some other function calls your function, you can propogate the error upward to the caller so they can do something with it. 
+
+```rust
+use std::fs::File;
+use std::io::{self, Read};
+
+fn read_username_from_file() -> Result<String, io::Error> {
+    let username_file_result = File::open("hello.txt");
+
+    let mut username_file = match username_file_result {
+        Ok(file) => file,
+        Err(e) => return Err(e),
+    };
+
+    let mut username = String::new();
+
+    match username_file.read_to_string(&mut username) {
+        Ok(_) => Ok(username),
+        Err(e) => Err(e),
+    }
+}
+```
+
+However, this example is a verbose way of error propogation. You can use the `?` shortcut for a more practical implementation:
+
+```rust
+use std::fs::File;
+use std::io::{self, Read};
+
+fn read_username_from_file() -> Result<String, io::Error> {
+    let mut username_file = File::open("hello.txt")?; // if Result is Ok, it'll coninue, otherwise if Err it'll hault and output the error
+    let mut username = String::new();
+    username_file.read_to_string(&mut username)?;
+    Ok(username)
+}
+```
+
+Alternatively, you could just use the `fs::read_to_string` function from the standard library. This is present because reading a file into a string is a fairly common operation.
+
+```rust
+use std::fs;
+use std::io;
+
+fn read_username_from_file() -> Result<String, io::Error> {
+    fs::read_to_string("hello.txt")
+}
+```
+
+The `?` operator can also be used to produce an `Option<T>` type. However, of course, the Option type produces either `Some<T>` or `None` instead of `Ok<T>` and `Err<E>`.
+
+```rust
+fn last_char_of_first_line(text: &str) -> Option<char> {
+    text.lines().next()?.chars().last() // methods on the string slice
+}
+```
+
+Note that you can produce a `Result<T, E>` from `main`, but since this is the entry and exit point of a program there are some particularities:
+- The error type requires the `Box<dyn Error>` type (a trait object), covered in chapter 18.
+- The executable will produce a value of 0 if `main` returns `Ok(())` as the `Result`, and a non-zero value if it returns an `Err`. This is an obvious C convention.
+
+There are other types the `main` function can return, but check the ExitCodes in the documentation for more info: https://doc.rust-lang.org/std/process/trait.Termination.html
+
+## When to panic! and when not to
+Returning `Result` is a good default choice because you then have further information about the error. You can always call `panic!` on the error, or a particular error and attempt to recover in other scenarios. 
+
+However in situations such as examples, prototype code, and tests, it's more appropraite to write code that panics instead of returning result. In these scenarios including error handling can cause unnecessary overhead, making it better to return later and implement robust error handling with `Result`. Similarly, `unwrap` and `expect` methods are very handy when prototyping because they make clear markers for where you need to implement error handling later on. 
+
+### Guidelines for error handling
+You do want your code to panic when it's possible that it could end up in a bad state. However, when failure is expected, it's more appropriate to return a `Result`.
+
+> When your code performs an operation that could put a user at risk if it’s called using invalid values, your code should verify the values are valid first and panic if the values aren’t valid. This is mostly for safety reasons: attempting to operate on invalid data can expose your code to vulnerabilities. This is the main reason the standard library will call panic! if you attempt an out-of-bounds memory access: trying to access memory that doesn’t belong to the current data structure is a common security problem. Functions often have contracts: their behavior is only guaranteed if the inputs meet particular requirements. Panicking when the contract is violated makes sense because a contract violation always indicates a caller-side bug, and it’s not a kind of error you want the calling code to have to explicitly handle. In fact, there’s no reasonable way for calling code to recover; the calling programmers need to fix the code. Contracts for a function, especially when a violation will cause a panic, should be explained in the API documentation for the function.
+
+Similarly, to reduce the amount of error checking in your code it's good to get in the habit of performing type validations on custom types, where possible. For example:
+
+Instead of implementing the type check within the function, and doing one-off variables, like here:
+
+```rust
+    loop {
+        // --snip--
+
+        let guess: i32 = match guess.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+
+        if guess < 1 || guess > 100 {
+            println!("The secret number will be between 1 and 100.");
+            continue;
+        }
+
+        match guess.cmp(&secret_number) {
+            // --snip--
+    }
+```
+
+Better to simply create a custom struct type for `Guess` that embeds the type validation as a method:
+
+```rust
+pub struct Guess {
+    value: i32,
+}
+
+impl Guess {
+    pub fn new(value: i32) -> Guess {
+        if value < 1 || value > 100 {
+            panic!("Guess value must be between 1 and 100, got {value}.");
+        }
+
+        Guess { value }
+    }
+
+    pub fn value(&self) -> i32 {
+        self.value
+    }
+}
+```
+
+So when creating a new `Guess` you call `Guess.new()` which validates that the number be between 1 and 100 automatically. If the `i32` number passes the validation it's stored in `Guess { value }` so it can be accessed via a _getter_ function with `value()`.
+
+
