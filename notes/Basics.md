@@ -582,7 +582,7 @@ let user2 = User {
 };
 ```
 
-This shortcut must come last, but it doesn't matter what order the other fields are in the struct. This update syntax allow uses `=` (assignment) so the data from user1 to user2 would be _moved_; hence these data from user1 would no longer be valid. 
+This shortcut must come last, but it doesn't matter what order the other fields are in the struct. This update syntax allow uses `=` (assignment) so the data from user1 to user2 would be _moved_; hence these data from user1 would no longer be valid.
 
 ### Tuple structs
 You can build tuples similar to structs if you're in a scenario where you need to name the tuple, but don't need field names.
@@ -598,7 +598,7 @@ fn main() {
 ```
 
 ### Non-field structs
-Called _Unit-like_ structs. 
+Called _Unit-like_ structs.
 
 ```rust
 struct AlwaysEqual;
@@ -609,30 +609,30 @@ fn main() {
 ```
 
 ### Debugging structs
-An alternative to using `println!` is the `dbg!` macro which can be used without explicitly turning on struct-oriented debugging information in your code. But you need to pass the data going to `dbg!` as a reference because otherwise it would take ownership of the data. Inversely, `println!` only uses data as references so there's no need to manually pass in as references. 
+An alternative to using `println!` is the `dbg!` macro which can be used without explicitly turning on struct-oriented debugging information in your code. But you need to pass the data going to `dbg!` as a reference because otherwise it would take ownership of the data. Inversely, `println!` only uses data as references so there's no need to manually pass in as references.
 
-Additionally, `dbg!` prints out the file and line number to the terminal so it could be more useful in debugging scenarios. 
+Additionally, `dbg!` prints out the file and line number to the terminal so it could be more useful in debugging scenarios.
 
 
 ## Methods
-Like functions, but defined within the confines of a struct and their first parameter is always `self` which represents the instnace of the struct the method is being called on. 
+Like functions, but defined within the confines of a struct and their first parameter is always `self` which represents the instnace of the struct the method is being called on.
 
-The main reason for using methods, opposed to loose functions, is to organize functions around specific types. It's a concise way to gather functions related to a specific type into one area of the code. 
+The main reason for using methods, opposed to loose functions, is to organize functions around specific types. It's a concise way to gather functions related to a specific type into one area of the code.
 
-While it's possible to move ownership to a method, by default (an 99% of the time) you'll want to just pass a reference, written as `&self` in the method's function signature. 
+While it's possible to move ownership to a method, by default (an 99% of the time) you'll want to just pass a reference, written as `&self` in the method's function signature.
 
 Also, note you can use the same name from a field to use for a method.
 
 ## Associated functions
-Similar to methods, but don't have the `self` as a parameter. Often used for constructors that will return a new instance of the struct. 
+Similar to methods, but don't have the `self` as a parameter. Often used for constructors that will return a new instance of the struct.
 
 To call associated functions you use the `::` syntax, like `String::from("hello");`.
 
 ## Multiple impl blocks
-Each struct is allowed to have multiple implmentation blocks. 
+Each struct is allowed to have multiple implmentation blocks.
 
 # Enums and pattern matching
-Enums give you the capability to say whether a value is one of a possible set of values. 
+Enums give you the capability to say whether a value is one of a possible set of values.
 
 Variations of an enum are namespaced under its identifier and we use `::` to separate the two:
 
@@ -670,7 +670,7 @@ enum IpAddrKind {
 }
 ```
 
-But you don't have to stop here; you can also embed structs and even enums within enums. Additionally, you can define methods on enums using the same `impl` keyword. 
+But you don't have to stop here; you can also embed structs and even enums within enums. Additionally, you can define methods on enums using the same `impl` keyword.
 
 ## Option enum
 Defined in the standard library. An option is simply something or nothing. Like a unit in `hoon`.
@@ -684,11 +684,130 @@ enum Option {
 }
 ```
 
-It's so useful that it's included in the prelude. You can use Some and None without the Option prefix. 
+It's so useful that it's included in the prelude. You can use Some and None without the Option prefix.
 
 Just like with `hoon` units, you need to "strip the unit" in order to operate on the underlying data as the static type system recognizes the `Option<T>` type and `T` to be two separate types. To do this, check out the methods available for `Option<T>` in the documentation: https://doc.rust-lang.org/std/option/enum.Option.html.
 
 Using `match` will come in handy to separate code blocks that operate on the data depending on which _option_ is present:
 
 ## Match
+Allows you to match a pattern to then take that route to some computation. Patterns can be made up of literal values, variable names, wildcards, and many other things.
 
+You match on _arms_ which resolves to some code, separated by `=>`. Each arm is separated by the next with a `,`.
+
+Your code can either be a single line, or encased in `{}` if multiple.
+
+Combining match and enums is useful in many situations. You’ll see this pattern a lot in Rust code: match against an enum, bind a variable to the data inside, and then execute code based on it.
+
+`other` is a catch-all arm which can be used at the end of the arms list to direct all other options that aren't explicitly listed before it. E.g.
+
+```rust
+let dice_roll = 9;
+match dice_roll {
+    3 => add_fancy_hat(),
+    7 => remove_fancy_hat(),
+    other => move_player(other),
+}
+
+fn add_fancy_hat() {}
+fn remove_fancy_hat() {}
+fn move_player(num_spaces: u8) {}
+```
+
+Alternatively, if you don't want to use the catch-all value, you can toss it with `_` instead of `other`.
+
+```rust
+let dice_roll = 9;
+match dice_roll {
+    3 => add_fancy_hat(),
+    7 => remove_fancy_hat(),
+    _ => (),
+}
+
+fn add_fancy_hat() {}
+fn remove_fancy_hat() {}
+```
+
+# Managing growing projects
+Rust has module systems to help you organize your code.
+
+They include:
+- Packages: A Cargo feature that lets you build, test, and share crates
+- Crates: A tree of modules that produces a library or executable
+- Modules and use: Let you control the organization, scope, and privacy of paths
+- Paths: A way of naming an item, such as a struct, function, or module
+
+## Packages and crates
+ A crate is the smallest amount of code that the Rust compiler considers at a time. They can come in one of two forms: a library crate or binary crate. We've only seen binary crates so far: continaing a `main()` program entry point and other source files that compile to a single binary.
+
+Library crates don't have `main()` function and they don't compile to a binary; instead they define functionality intended to be used with other projects. In practice most Rust programmers refer to 'crate' when they mean library. For example, `crates/nockapp` is a library crate because while it has many Rust files, there is no `main.rs` file; only a `lib.rs` file in `src/`.
+
+You can create a library crate by running: `cargo new <crate-name> --lib`. Whereas running this without the `--lib` flag would create a binary crate by default.
+
+A package is a bundle of one or more crates that provides a set of functionality. Cargo.toml file is included with the package to describe how to build the crates.
+
+A package can contain as many binary crates as you'd like, but only one library crate. There must be one crate, whether binary or library.
+
+If a package contains src/main.rs and src/lib.rs, it has two crates: a binary and a library, both with the same name as the package. A package can have multiple binary crates by placing files in the src/bin directory: each file will be a separate binary crate.
+
+These files (`main.rs` and `lib.rs`) are called _crate roots_ because the compiler hunts for them first, and the contents of either form a module named `crate` at the root of the crate's module structure, known as the _module tree_.
+
+An exmaple:
+
+```
+crate
+ └── front_of_house
+     ├── hosting
+     │   ├── add_to_waitlist
+     │   └── seat_at_table
+     └── serving
+         ├── take_order
+         ├── serve_order
+         └── take_payment
+```
+
+## Modules
+`use` is the keyword that brings a path into scope and `pub` is the keyword to make items public.
+
+Once a module is a part of your crate, you can refer to code in that module from anywhere else in that same crate, as long as the privacy rules allow, suing the path to the code. It's kind of like a namespace: `crate::garden::vegetables::Asparagus`.
+
+The `use` keyword creates shortcuts to items to reduce repetition of long paths. E.g. by prepending the path to Asparagus above with `use` you can thereafter just refer to `Asparagus`.
+
+`pub mod` is used to make a module public. E.g. by including something like `pub mod garden` you're telling the compiler to inclue the code it finds in `src/garden.rs`.
+
+Modules let us control the privacy of code within them, because by default they're private. By making internal module code public you're allowing other code to use and begin to rely on them.
+
+Modules are declared with `mod` and can be nested within other modules and/or contain functions, structs, enums, constants, traits, etc.
+
+With modules we can group related definitions together an name why they're related.
+
+Here's an example implementing a resturant:
+
+```rust
+mod front_of_house {
+    mod hosting {
+        fn add_to_waitlist() {}
+        fn seat_to_table() {}
+    }
+
+    mod serving {
+        fn take_order() {}
+        fn serve_order() {}
+        fn take_payment() {}
+    }
+}
+```
+
+*See module tree of how these fit into the overall structure above.
+
+Just like directories in a filesystem, you use modules to organize your code. And just like files in a directory, we need a way to find our modules.
+
+## Paths
+Just like navigating a filesystem, you use a path to navigate a module tree. In a call to a function, you need to know its path.
+
+A path can take two forms:
+
+- An absolute path is the full path starting from a crate root; for code from an external crate, the absolute path begins with the crate name, and for code from the current crate, it starts with the literal crate.
+- A relative path starts from the current module and uses self, super, or an identifier in the current module.
+
+Path identifiers are separated by `::`.
