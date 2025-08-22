@@ -1454,3 +1454,83 @@ fn main() {
 }
 ```
 
+# Automated tests
+Tests ensure code runs in the expected manner; a scope outside the bounds of the compiler. 
+
+Tests generally follow this format:
+- Set up any needed data or state.
+- Run the code you want to test.
+- Assert that the results are what you expect.
+
+A test in Rust is a function that's annotated with the `test` attribute (metadata). To change a function into a test function simply add a `#[test]` attribute before `fn`. When you run `cargo test`, Rust builds a test runner binary that runs the annotated functions and reports on whether each function passes or fails.
+
+A test module comes in a new cargo project and a test function is automatically generated for us. You can use this structure to build your testing.
+
+You can also pass an argument to `cargo test` to run only tests whose name matches a string. Covered more later. 
+
+`assert!` macro is useful when you want to ensure that some condition in a test evaluates to `true`.
+
+Since the `#[test]` module is well a module, you'll need to bring the functions you're testing into the test module scope. You can do this either with `user super::*;` - pulling in anything outside the scope into scope (but must be in the same file), or manually import the files. 
+
+To test for equality you can use the two macros:
+- `assert_eq!` equal
+- `assert_ne!` not equal
+
+> Note that in some languages and test frameworks, the parameters to equality assertion functions are called expected and actual, and the order in which we specify the arguments matters. However, in Rust, they’re called left and right, and the order in which we specify the value we expect and the value the code produces doesn’t matter.
+
+## Failure messages
+You can add an optional message to the assert class of macros, if desired. This will help you more quickly debug code instead of having to interpret somewhat sparse standard debugging output.
+
+It's formatted like this:
+
+```rust
+    fn greeting_contains_name() {
+        let result = greeting("Carol");
+        assert!(
+            result.contains("Carol"),
+            "Greetings did not contain name, value was `{result}`"
+        );
+    }
+```
+
+If a function _should get an error_ you can test this by putting a `#[should_panic]` attribute right below the `#[test]` attribute:
+
+```rust
+#[test]
+#[should_panic]
+fn greater_than_100() {
+    Guess:new(200);
+}
+```
+
+To make them more precise, you can add an `expected` parameter:
+
+```rust
+#[should_panic(expected = "less than or equal to 100")]
+...
+```
+
+Where `expected` in this case referrs to a portion of the message output when the `Guess::new` method `panics`. You can include as little or all of this message.
+
+## Result<T, E> in tests
+Instead of using `panic!` you can use `Result<T, E>`:
+
+```rust
+    #[test]
+    fn it_works() -> Result<(), String> {
+        let result = add(2, 2);
+
+        if result == 4 {
+            Ok(())
+        } else {
+            Err(String::from("two plus two does not equal four"))
+        }
+    }
+```
+
+Because tests run in paralell (one thread per test), they should not depend on mutual state. E.g. suppose two tests output something to a single file. That file's state would be overwritten by the second test. A solution to this is to make sure each test writes to a different file; or run tests one at a time.
+
+Or, you can just specify that'd you want all tests to run in 1 thread with `cargo test -- --test-threads=1`. It will take longer to run, but it'll avoid the problems caused by parallelism.
+
+For suggestions on unit and integration testing see this section: https://doc.rust-lang.org/book/ch11-03-test-organization.html
+
