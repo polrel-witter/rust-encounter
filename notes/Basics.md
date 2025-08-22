@@ -838,9 +838,9 @@ pub fn eat_at_restaurant() {
 
 `eat_at_resturant` can acceess `add_to_waitlist` because the funtion and its parent module `hosting` are public and the top-parent module `front_of_house` (while not explicitly stated as public), is a sibling module of `eat_at_resturant` so has access. However, to have other modules outside this crate access `front_of_house` you'd have to explicitly make it public, like `eat_at_resturant`.
 
-These public modules make up your API, particularly in the context of a library crate. 
+These public modules make up your API, particularly in the context of a library crate.
 
-Instead of typing out the full relative path you can use `super` (like `..` in C) to jump out to the parent module to call an item. 
+Instead of typing out the full relative path you can use `super` (like `..` in C) to jump out to the parent module to call an item.
 
 ```rust
 fn deliver_order() {}
@@ -855,7 +855,7 @@ mod back_of_house {
 }
 ```
 
-Making a struct public doesn't automatically make the fields public. These must be granularly made public. However, making an enum public makes all its variants public. 
+Making a struct public doesn't automatically make the fields public. These must be granularly made public. However, making an enum public makes all its variants public.
 
 #### Best Practices for Packages with a Binary and a Library
 > We mentioned that a package can contain both a src/main.rs binary crate root as well as a src/lib.rs library crate root, and both crates will have the package name by default. Typically, packages with this pattern of containing both a library and a binary crate will have just enough code in the binary crate to start an executable that calls code defined in the library crate. This lets other projects benefit from the most functionality that the package provides because the library crate’s code can be shared.
@@ -863,7 +863,7 @@ Making a struct public doesn't automatically make the fields public. These must 
 > The module tree should be defined in src/lib.rs. Then, any public items can be used in the binary crate by starting paths with the name of the package. The binary crate becomes a user of the library crate just like a completely external crate would use the library crate: it can only use the public API. This helps you design a good API; not only are you the author, you’re also a client!
 
 ## Using `use`
-`use` allows you to state the path to a module once so you can then call the items at that path without having to specify each part of the path every time you make a call. 
+`use` allows you to state the path to a module once so you can then call the items at that path without having to specify each part of the path every time you make a call.
 
 ```rust
 mod front_of_house {
@@ -879,7 +879,7 @@ pub fn eat_at_resturant {
 }
 ```
 
-This is similar to creating a symbolic link in the filesystem. In the example above, `hosting` is now in-scope. 
+This is similar to creating a symbolic link in the filesystem. In the example above, `hosting` is now in-scope.
 
 However, `use` only creates a shortcut for the particular scope in which the `use` occurs. If the `eat_at_resturant` function was defined within a different module, `hosting` would not be in scope. I.e. the `use` shortcut needs to be _within_ the context of a module in order to place the contents at the path in scope.
 
@@ -894,7 +894,7 @@ fn main() {
 }
 ```
 
-The exception to this is if we're bringing in two items with the same name into scope with `use` statements, becuase Rust doesn't allow that. 
+The exception to this is if we're bringing in two items with the same name into scope with `use` statements, becuase Rust doesn't allow that.
 
 ```rust
 use std::fmt;
@@ -909,7 +909,7 @@ fn function2() -> io::Result<()> {
 }
 ```
 
-Alterntatively, you can alias one of these names with `as`. 
+Alterntatively, you can alias one of these names with `as`.
 
 ```rust
 use std::fmt::Result;
@@ -924,7 +924,7 @@ fn function2() -> IoResult<()> {
 }
 ```
 
-Note that to use the standard library, you do need to pull it into scope - it's not there by default because it's a package (albiet that comes with Rust) like all others. 
+Note that to use the standard library, you do need to pull it into scope - it's not there by default because it's a package (albiet that comes with Rust) like all others.
 
 ### Nested `use` paths
 Instead of defining each path by line, if items are coming from the same module or crate, you can trunkate into one line by specifying the common part of the path followed by `::` and `{}` around the parts taht differ.
@@ -942,14 +942,14 @@ If we'd prefer to bring in all public items defined at a path into scope, we can
 use std::collections::*;
 ```
 
-Be careful with this though because as code changes, this may cause compile errors as you have not granularly specified which parts "work" with the code these other modules are interfacing with. It's best used to pull everything into a test module. 
+Be careful with this though because as code changes, this may cause compile errors as you have not granularly specified which parts "work" with the code these other modules are interfacing with. It's best used to pull everything into a test module.
 
 ## Summary
 Rust lets you split a package into multiple crates and a crate into modules so you can refer to items defined in one module from another module.
 
 
 # Common collections
-Collections are a series of useful data structures that exists within the standard library. Unlike build-in types like arrays and tuples, the data that these collections point to are stored on the heap. 
+Collections are a series of useful data structures that exists within the standard library. Unlike build-in types like arrays and tuples, the data that these collections point to are stored on the heap.
 
 A few data types are covered in the book (vectors, strings, and hash maps), but for a full index, see here: https://doc.rust-lang.org/std/collections/index.html
 
@@ -1042,7 +1042,7 @@ Note that, like `Option<T>`, `Result<T, E>` is a part of the prelude so we don't
 You can go further than this by branching on the error to produce more granular actions based on the result.
 
 ### Proprogating errors
-If some other function calls your function, you can propogate the error upward to the caller so they can do something with it. 
+If some other function calls your function, you can propogate the error upward to the caller so they can do something with it.
 
 ```rust
 use std::fs::File;
@@ -1105,9 +1105,9 @@ Note that you can produce a `Result<T, E>` from `main`, but since this is the en
 There are other types the `main` function can return, but check the ExitCodes in the documentation for more info: https://doc.rust-lang.org/std/process/trait.Termination.html
 
 ## When to panic! and when not to
-Returning `Result` is a good default choice because you then have further information about the error. You can always call `panic!` on the error, or a particular error and attempt to recover in other scenarios. 
+Returning `Result` is a good default choice because you then have further information about the error. You can always call `panic!` on the error, or a particular error and attempt to recover in other scenarios.
 
-However in situations such as examples, prototype code, and tests, it's more appropraite to write code that panics instead of returning result. In these scenarios including error handling can cause unnecessary overhead, making it better to return later and implement robust error handling with `Result`. Similarly, `unwrap` and `expect` methods are very handy when prototyping because they make clear markers for where you need to implement error handling later on. 
+However in situations such as examples, prototype code, and tests, it's more appropraite to write code that panics instead of returning result. In these scenarios including error handling can cause unnecessary overhead, making it better to return later and implement robust error handling with `Result`. Similarly, `unwrap` and `expect` methods are very handy when prototyping because they make clear markers for where you need to implement error handling later on.
 
 ### Guidelines for error handling
 You do want your code to panic when it's possible that it could end up in a bad state. However, when failure is expected, it's more appropriate to return a `Result`.
@@ -1161,4 +1161,296 @@ impl Guess {
 
 So when creating a new `Guess` you call `Guess.new()` which validates that the number be between 1 and 100 automatically. If the `i32` number passes the validation it's stored in `Guess { value }` so it can be accessed via a _getter_ function with `value()`.
 
+# Generic types, Traits, and Lifetimes
+Generics refers to abstract stand-ins for concrete types or other properies (e.g. `Result<T, E>`, `Option<T>`, or `HashMap<K, V>`), opposed to something like `i32` or `String`.
+
+Like these foundational generic types, you can create your own.
+
+Traits are used to define behavior in a generic way. And Lifetimes is a variety of generics that give the compiler information about how references relate to each other.
+
+The core benefit of using generics is code deduplication. With generics you can replace specific types with a placeholder that represents multiple types.
+
+For example, here's an instance of using generics on a function:
+```rust
+fn main() {
+    let number_list = vec![34, 50, 25, 100, 65];
+
+    let mut largest = &number_list[0];
+
+    for number in &number_list {
+        if number > largest {
+            largest = number;
+        }
+    }
+
+    println!("The largest number is {largest}");
+
+    let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
+
+    let mut largest = &number_list[0];
+
+    for number in &number_list {
+        if number > largest {
+            largest = number;
+        }
+    }
+
+    println!("The largest number is {largest}");
+}
+```
+
+No need to have two of the same functions, just make a generic one to pass the slices into:
+
+```rust
+fn largest(list: &[i32]) -> &i32 {
+    let mut largest = &list[0];
+
+    for item in list {
+        if item > largest {
+            largest = item;
+        }
+    }
+
+    largest
+}
+
+fn main() {
+    let number_list = vec![34, 50, 25, 100, 65];
+
+    let result = largest(&number_list);
+    println!("The largest number is {result}");
+
+    let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
+
+    let result = largest(&number_list);
+    println!("The largest number is {result}");
+}
+```
+
+To parameterize a type in a function, you need to name the type parameter. You can use any identifier as a type parameter name, but by convention Rust type parameters are short, often just one letter, and CamelCase. `T` is more often than not used.
+
+Then, you declare the type parameter in the function signature in `<>`: `fn largest<T>(list: &[T]) -> &T {`
+
+However, you'll notice that in the function below it's not clear that this type can/should be compared like it is. What if the parameter type was an enum or string? This is where Traits come in.
+
+In this example, we port in the `PartialOrd` trait to enable parameter type `T` to be compared as a type that is ordered.
+
+```rust
+fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
+    let mut largest = &list[0];
+
+    for item in list {
+        if item > largest {
+            largest = item;
+        }
+    }
+
+    largest
+}
+```
+
+You can also use generics in structs:
+
+```rust
+struct Point<T> {
+    x: T,
+    y: T,
+}
+```
+
+Just like with functions you need to define the type `T` within `<>` after the name of the struct.
+
+Of course, type `T` is one type so both `x` and `y` must be of the same type.
+
+
+```rust
+fn main() {
+    let integer = Point { x: 5, y: 10 };
+    let float = Point { x: 1.0, y: 4.0 };
+}
+```
+
+However, it's possible to have multiple type parameters:
+
+```rust
+struct Point<T, U> {
+    x: T,
+    y: U,
+}
+
+fn main() {
+    let both_integer = Point { x: 5, y: 10 };
+    let both_float = Point { x: 1.0, y: 4.0 };
+    let integer_and_float = Point { x: 5, y: 4.0 };
+}
+```
+
+Just like `Result<T, E>`. And, you can include as many generic types as you want, but generally want to keep it limited to a few per function or struct else you risk legibility.
+
+While skipped here, you can also use generics with Enums and methods: https://doc.rust-lang.org/book/ch10-01-syntax.html
+
+## Performance consideration
+There's no performance difference between generic and concrete types.
+
+> Rust accomplishes this by performing monomorphization of the code using generics at compile time. Monomorphization is the process of turning generic code into specific code by filling in the concrete types that are used when compiled. In this process, the compiler does the opposite of the steps we used to create the generic function in Listing 10-5: the compiler looks at all the places where generic code is called and generates code for the concrete types the generic code is called with.
+
+However, without monomorphization generic types _would_ be slower during runtime as there would be overhead in replacing their types with ones that are concrete.
+
+Example:
+```rust
+let integer = Some(5);
+let float = Some(5.0);
+```
+
+> When Rust compiles this code, it performs monomorphization. During that process, the compiler reads the values that have been used in Option<T> instances and identifies two kinds of Option<T>: one is i32 and the other is f64. As such, it expands the generic definition of Option<T> into two definitions specialized to i32 and f64, thereby replacing the generic definition with the specific ones.
+
+
+## Traits: defining shared behavior
+As mentioned above a trait defines the functionality a particular type has and can share with other types.
+
+Defining a trait involves naming it along with including what are essentially functions signatures, but techincally called methods that end in `;` to indicate what is produced as a result of calling that trait's method.
+
+```rust
+pub trait Summary {
+    fn summarize(&self) -> String;
+}
+```
+
+You can have any number of methods per trait.
+
+Then to implement the trait, you follow the same method signature but actuall implement how the type is formed:
+
+You'll notice implementing a trait looks a lot like a method implementation:
+
+```rust
+pub struct NewsArticle {
+    pub headline: String,
+    pub location: String,
+    pub author: String,
+    pub content: String,
+}
+
+impl Summary for NewsArticle {
+    fn summarize(&self) -> String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+```
+
+Within the impl block we put the method signatures that the trait definition has defined.
+
+Now users of this library can implement the trait on `NewsArticle` by calling the trait just like they would a method.
+
+However, if you want, you can include a default trait implementation that can be called the same way. You can mix and match - including implemented trait methods and not.
+
+```rust
+pub trait Summary {
+    fn summarize_author(&self) -> String;
+
+    fn summarize(&self) -> String {
+        format!("(Read more from {}...)", self.summarize_author())
+    }
+}
+```
+
+See here for more on traits: https://doc.rust-lang.org/book/ch10-02-traits.html#traits-as-parameters
+
+
+## Validating references with Lifetimes
+Rather than ensuring a type has the behavior we want, lifetimes ensure that references are valid as long as we need them to be.
+
+On thing we skipped over when covering references originally is that every reference has a _lifetime_, which is a scope for which that reference is valid.
+
+Most of the time lifetimes are implicit and inferred, just like most types are inferred. This is a novel concept compared to other programming languages.
+
+The main aim with lifetimes is to prevent dangling references which cause a program to reference data other than the data it's intended to reference.
+
+```rust
+fn main() {
+    let r;
+
+    {
+        let x = 5;
+        r = &x;
+          // ^ borrowed value doesn't 'live long enough'
+    }
+
+    println!("r: {r}");
+}
+```
+
+> The error message says that the variable x “does not live long enough.” The reason is that x will be out of scope when the inner scope ends on line 7. But r is still valid for the outer scope; because its scope is larger, we say that it “lives longer.” If Rust allowed this code to work, r would be referencing memory that was deallocated when x went out of scope, and anything we tried to do with r wouldn’t work correctly. So how does Rust determine that this code is invalid? It uses a borrow checker.
+
+Here's a visual of the lifetime scope for both r and x:
+
+```rust
+fn main() {
+    let r;                // ---------+-- 'a
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {r}");   //          |
+}                         // ---------+
+```
+
+To fix:
+
+```rust
+fn main() {
+    let x = 5;            // ----------+-- 'b
+                          //           |
+    let r = &x;           // --+-- 'a  |
+                          //   |       |
+    println!("r: {r}");   //   |       |
+                          // --+       |
+}                         // ----------+
+```
+
+### Lifetime annotations
+Annotations describe the relationship of the lifetimes to multiple references to each other without affecting the lifetimes. Just as functions can accept any type when the signature specifies a generic type parameter, functions can accept references with any lifetime by specifying a generic lifetime parameter.
+
+The names of a lifetime parameter must start with `'` and are usually all lowercase and very short like generic types.
+
+Conventionally, most use `'a` for the first lifetime annotation. E.g.
+
+```rust
+&i32  // a reference
+&'a i32 // a reference with an explicit lifetime
+&'a mut i32 // a mutable reference with an explicit lifetime
+```
+
+In function signatures, lifetime annotations look similar to generic type parameter function signatures:
+
+```rust
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+```
+
+> The function signature now tells Rust that for some lifetime 'a, the function takes two parameters, both of which are string slices that live at least as long as lifetime 'a. The function signature also tells Rust that the string slice returned from the function will live at least as long as lifetime 'a. In practice, it means that the lifetime of the reference returned by the longest function is the same as the smaller of the lifetimes of the values referred to by the function arguments. These relationships are what we want Rust to use when analyzing this code.
+>
+> Remember, when we specify the lifetime parameters in this function signature, we’re not changing the lifetimes of any values passed in or returned. Rather, we’re specifying that the borrow checker should reject any values that don’t adhere to these constraints. Note that the longest function doesn’t need to know exactly how long x and y will live, only that some scope can be substituted for 'a that will satisfy this signature.
+
+
+The lifetime parameter for the return type must have an annotation in one or moe of the function parameters in order to compile.
+
+### Lifetime annotations in structs
+We can define structs to hold references, but in that case we would need to add a lifetime annotation on every reference in the struct's definition.
+
+```rust
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+}
+
+fn main() {
+    let novel = String::from("Call me Sage...");
+    let first_sentence = novel.split('.').next().unwrap();
+    let ImportantExcerpt {
+        part: first_sentence;
+    };
+}
+```
 
