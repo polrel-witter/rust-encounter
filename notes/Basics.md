@@ -1455,7 +1455,7 @@ fn main() {
 ```
 
 # Automated tests
-Tests ensure code runs in the expected manner; a scope outside the bounds of the compiler. 
+Tests ensure code runs in the expected manner; a scope outside the bounds of the compiler.
 
 Tests generally follow this format:
 - Set up any needed data or state.
@@ -1466,11 +1466,11 @@ A test in Rust is a function that's annotated with the `test` attribute (metadat
 
 A test module comes in a new cargo project and a test function is automatically generated for us. You can use this structure to build your testing.
 
-You can also pass an argument to `cargo test` to run only tests whose name matches a string. Covered more later. 
+You can also pass an argument to `cargo test` to run only tests whose name matches a string. Covered more later.
 
 `assert!` macro is useful when you want to ensure that some condition in a test evaluates to `true`.
 
-Since the `#[test]` module is well a module, you'll need to bring the functions you're testing into the test module scope. You can do this either with `user super::*;` - pulling in anything outside the scope into scope (but must be in the same file), or manually import the files. 
+Since the `#[test]` module is well a module, you'll need to bring the functions you're testing into the test module scope. You can do this either with `user super::*;` - pulling in anything outside the scope into scope (but must be in the same file), or manually import the files.
 
 To test for equality you can use the two macros:
 - `assert_eq!` equal
@@ -1533,4 +1533,15 @@ Because tests run in paralell (one thread per test), they should not depend on m
 Or, you can just specify that'd you want all tests to run in 1 thread with `cargo test -- --test-threads=1`. It will take longer to run, but it'll avoid the problems caused by parallelism.
 
 For suggestions on unit and integration testing see this section: https://doc.rust-lang.org/book/ch11-03-test-organization.html
+
+# Implementing minigrep CLI tool
+Test-driven development (TDD) process with the following steps:
+
+- Write a test that fails and run it to make sure it fails for the reason you expect.
+- Write or modify just enough code to make the new test pass.
+- Refactor the code you just added or changed and make sure the tests continue to pass.
+- Repeat from step 1!
+
+> Though it’s just one of many ways to write software, TDD can help drive code design. Writing the test before you write the code that makes the test pass helps to maintain high test coverage throughout the process.
+
 
