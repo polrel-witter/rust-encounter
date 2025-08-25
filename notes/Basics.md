@@ -1545,3 +1545,113 @@ Test-driven development (TDD) process with the following steps:
 > Though it’s just one of many ways to write software, TDD can help drive code design. Writing the test before you write the code that makes the test pass helps to maintain high test coverage throughout the process.
 
 
+# Functional aspects
+Rust is significantly influenced by functional programming languages. 
+
+## Closures
+These are anonymous functions that can be saved in a variable or passed as arguments to other functions.
+
+Example:
+```rust
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum ShirtColor {
+    Red,
+    Blue,
+}
+
+struct Inventory {
+    shirts: Vec<ShirtColor>,
+}
+
+impl Inventory {
+    fn giveaway(&self, user_preference: Option<ShirtColor>) -> ShirtColor {
+        // Closure is here: if Option<ShirtColor> is the Some() variant, `unwrap_or_else` returns its underlying value from the Some(); otherwise, if the Option<T> is None it'll call the closure (|| self.most_stocked()) and return the value produced by the closure. 
+        // kind of like this in hoon:
+        // =/  option=(unit @tas)
+        // =/  some-param=*
+        // ?~  option
+        //   (most-stocked some-param)
+        // u.option
+        user_preference.unwrap_or_else(|| self.most_stocked())
+    }
+
+    fn most_stocked(&self) -> ShirtColor {
+        let mut num_red = 0;
+        let mut num_blue = 0;
+
+        for color in &self.shirts {
+            match color {
+                ShirtColor::Red => num_red += 1,
+                ShirtColor::Blue => num_blue += 1,
+            }
+        }
+        if num_red > num_blue {
+            ShirtColor::Red
+        } else {
+            ShirtColor::Blue
+        }
+    }
+}
+
+fn main() {
+    let store = Inventory {
+        shirts: vec![ShirtColor::Blue, ShirtColor::Red, ShirtColor::Blue],
+    };
+
+    let user_pref1 = Some(ShirtColor::Red);
+    let giveaway1 = store.giveaway(user_pref1);
+    println!(
+        "The user with preference {:?} gets {:?}",
+        user_pref1, giveaway1
+    );
+
+    let user_pref2 = None;
+    let giveaway2 = store.giveaway(user_pref2);
+    println!(
+        "The user with preference {:?} gets {:?}",
+        user_pref2, giveaway2
+    );
+}
+```
+
+> Closures are typically short and relevant only within a narrow context rather than in any arbitrary scenario.
+
+Another way to write a closure is to assign it directly to a variable:
+
+```rust
+    let expensive_closure = |num: u32| -> u32 {
+        println!("calculating slowly...");
+        thread::sleep(Duration::from_secs(2));
+        num
+    };
+```
+
+Which looks more like a function. Here's a direct comparison:
+
+```rust
+fn  add_one_v1   (x: u32) -> u32 { x + 1 }
+let add_one_v2 = |x: u32| -> u32 { x + 1 };
+let add_one_v3 = |x|             { x + 1 };
+let add_one_v4 = |x|               x + 1  ;
+```
+
+Clearly closures require less syntax. v4 works because closure body's only have one expression. Although keep in mind that if types are specified the compiler infers what they'll be based on the first type passed in.
+
+```rust
+    let example_closure = |x| x;
+
+    let s = example_closure(String::from("hello")); 
+    let n = example_closure(5);
+```
+
+In this example, the compiler infers a `String` for `example_closure` so passing an integer will cause a compile error.
+
+## Iterators
+Allows you to perform some task in on a sequence of items in turn. Iterators is under the hood of how `for` loops work.
+
+> In languages that don’t have iterators provided by their standard libraries, you would likely write this same functionality by starting a variable at index 0, using that variable to index into the vector to get a value, and incrementing the variable value in a loop until it reached the total number of items in the vector. Iterators handle all of that logic for you, cutting down on repetitive code you could potentially mess up. 
+
+As far as performance goes, iterators are faster than for loops as they get compiled down to roughly the same code as if you'd written the low-level code yourself. 
+
+Iterators, along with closures, are zero-cost abstractions meaning there's no overhead introduced as a result of using them, in comparision to other methods.
+
