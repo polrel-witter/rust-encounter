@@ -1546,7 +1546,7 @@ Test-driven development (TDD) process with the following steps:
 
 
 # Functional aspects
-Rust is significantly influenced by functional programming languages. 
+Rust is significantly influenced by functional programming languages.
 
 ## Closures
 These are anonymous functions that can be saved in a variable or passed as arguments to other functions.
@@ -1565,7 +1565,7 @@ struct Inventory {
 
 impl Inventory {
     fn giveaway(&self, user_preference: Option<ShirtColor>) -> ShirtColor {
-        // Closure is here: if Option<ShirtColor> is the Some() variant, `unwrap_or_else` returns its underlying value from the Some(); otherwise, if the Option<T> is None it'll call the closure (|| self.most_stocked()) and return the value produced by the closure. 
+        // Closure is here: if Option<ShirtColor> is the Some() variant, `unwrap_or_else` returns its underlying value from the Some(); otherwise, if the Option<T> is None it'll call the closure (|| self.most_stocked()) and return the value produced by the closure.
         // kind of like this in hoon:
         // =/  option=(unit @tas)
         // =/  some-param=*
@@ -1640,7 +1640,7 @@ Clearly closures require less syntax. v4 works because closure body's only have 
 ```rust
     let example_closure = |x| x;
 
-    let s = example_closure(String::from("hello")); 
+    let s = example_closure(String::from("hello"));
     let n = example_closure(5);
 ```
 
@@ -1649,9 +1649,44 @@ In this example, the compiler infers a `String` for `example_closure` so passing
 ## Iterators
 Allows you to perform some task in on a sequence of items in turn. Iterators is under the hood of how `for` loops work.
 
-> In languages that don’t have iterators provided by their standard libraries, you would likely write this same functionality by starting a variable at index 0, using that variable to index into the vector to get a value, and incrementing the variable value in a loop until it reached the total number of items in the vector. Iterators handle all of that logic for you, cutting down on repetitive code you could potentially mess up. 
+> In languages that don’t have iterators provided by their standard libraries, you would likely write this same functionality by starting a variable at index 0, using that variable to index into the vector to get a value, and incrementing the variable value in a loop until it reached the total number of items in the vector. Iterators handle all of that logic for you, cutting down on repetitive code you could potentially mess up.
 
-As far as performance goes, iterators are faster than for loops as they get compiled down to roughly the same code as if you'd written the low-level code yourself. 
+As far as performance goes, iterators are faster than for loops as they get compiled down to roughly the same code as if you'd written the low-level code yourself.
 
 Iterators, along with closures, are zero-cost abstractions meaning there's no overhead introduced as a result of using them, in comparision to other methods.
+
+# Concurrency
+Concurrent programming is when different parts of a program execute independently and adjacently, parallel programming, which is when programs execute in paralell, leveraging multiple CPU cores. Historically, concurrency has been difficult and error prone, but Rust aims to change that.
+
+With Ownership and Type Safety, most of the traditional problems encountered become compile-time errors rather than runtime.
+
+## Multi-threading
+On OSes a program's code runs in a process, and the OS will manage multiple processes at once. Within a program, you can also have independent parts that run simultaneously. The features that run these indepdent parts are called threads. For example, a web server could have multiple threads so that it can respond to more than one request at the same time.
+
+OSes provide an API to generate threads on the OS level. Rust implements a 1:1 model whereby one Rust thread maps directly to one OS-level thread. However, there are crates that implement different models.
+
+Create new threads with `thread::spawn`.
+
+```rust
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    thread::spawn(|| {
+        for i in 1..10 {
+            println!("hi number {i} from the spawned thread!");
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+
+    for i in 1..5 {
+        println!("hi number {i} from the main thread!");
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+```
+
+In this example output will differ each time you run it because the underlying OS will be processing each thread in parallel. Here's the spawn thread is supposed to execute 9 loops but because the main thread only has 5, the spawn thread won't ever reach the last few; Rust programs stop after the main thread is finished.
+
+You'll also notice that threads are formatted with closures.
 
